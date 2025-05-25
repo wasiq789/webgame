@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tebak Senyawa Hidrokarbon 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset dan style dasar */
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #2c3e50, #34495e); /* Darker, modern gradient */
+            font-family: 'Poppins', sans-serif; /* Modern font */
+            color: #ecf0f1; /* Light gray text */
+            text-align: center;
+            overflow-x: hidden;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1, h2, p {
+            margin: 15px 0;
+            color: #ecf0f1;
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #8aff8a; /* Vibrant green for main title */
+            text-shadow: 0 0 10px rgba(138, 255, 138, 0.5);
+        }
+        h2 {
+            font-size: 2em;
+            color: #a0f0f0; /* Light blue for subtitles */
+        }
+        input, select, button {
+            font-family: 'Poppins', sans-serif;
+            font-size: 17px;
+            padding: 12px 20px;
+            margin: 8px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        input[type="text"] {
+            background-color: #3f5161; /* Slightly lighter dark background */
+            color: #ecf0f1;
+            width: calc(100% - 40px); /* Adjust width */
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        input[type="text"]::placeholder {
+            color: #bdc3c7; /* Lighter placeholder text */
+        }
+        button {
+            cursor: pointer;
+            background-color: #3498db; /* Blue button */
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        button:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Card-like containers for screens */
+        .game-screen-container {
+            background-color: #34495e; /* Darker background for main container */
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 800px;
+            position: relative; /* Penting untuk overlay */
+        }
+
+        /* Halaman awal */
+        #startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #characterSelect {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .char-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: border-color 0.3s, background-color 0.3s, transform 0.2s;
+            padding: 12px 25px;
+            color: #ecf0f1;
+            font-weight: 600;
+            background-color: #5d6d7e; /* Muted background for character options */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .char-option:hover {
+            transform: translateY(-2px);
+            background-color: #6c7e90;
+        }
+        .char-option.selected {
+            border-color: #8aff8a; /* Vibrant green border */
+            background-color: #27ae60; /* Green for selected */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Halaman game utama */
+        #mainGame {
+            display: none;
+        }
+        #game3D {
+            width: 100%;
+            height: 400px; /* Fixed height for consistent look */
+            background-color: #1a2530; /* Very dark background for 3D area */
+            margin: 20px auto;
+            border-radius: 15px;
+            box-shadow: inset 0 0 15px rgba(0, 204, 255, 0.3), 0 0 20px rgba(0, 204, 255, 0.2); /* Inner and outer glow */
+            overflow: hidden; /* Ensure Three.js canvas fits */
+            display: flex; /* To center Three.js canvas */
+            justify-content: center;
+            align-items: center;
+        }
+        #wordContainer {
+            margin: 20px auto;
+            max-width: 650px; /* Slightly wider */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px; /* Slightly larger gap */
+        }
+        .letter-box {
+            background: #3498db; /* Blue for letters */
+            border-radius: 10px;
+            width: 60px; /* Larger boxes */
+            height: 60px;
+            line-height: 60px;
+            font-size: 28px; /* Larger font */
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            transition: 0.2s ease;
+            text-transform: uppercase;
+        }
+        .letter-box:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        .letter-box.selected {
+            background: #2ecc71; /* Green for selected */
+            color: #2c3e50;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+        }
+        #answerArea {
+            margin-top: 15px;
+            font-size: 36px; /* Larger answer font */
+            min-height: 50px;
+            font-weight: 700;
+            letter-spacing: 8px; /* More spacing for clarity */
+            color: #f1c40f; /* Yellow for answer */
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+            background-color: #4a6176;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #infoBar {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #bdc3c7;
+        }
+        #message {
+            font-weight: 700;
+            margin-top: 15px;
+            min-height: 30px;
+            font-size: 1.1em;
+        }
+        #message[style*="color: rgb(0, 255, 153)"] { /* Specific for correct answer green */
+            color: #8aff8a !important;
+            text-shadow: 0 0 5px rgba(138, 255, 138, 0.7);
+        }
+        #message[style*="color: rgb(255, 68, 68)"] { /* Specific for wrong answer red */
+            color: #ff6b6b !important;
+            text-shadow: 0 0 5px rgba(255, 107, 107, 0.7);
+        }
+        #explanation {
+            font-style: italic;
+            margin-top: 15px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #bdc3c7;
+            line-height: 1.5;
+        }
+
+        /* Halaman akhir */
+        #endScreen {
+            display: none;
+        }
+        #endScreen h2 {
+            font-size: 3em;
+            color: #8aff8a;
+            text-shadow: 0 0 15px rgba(138, 255, 138, 0.7);
+        }
+        #endScreen p {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #ecf0f1;
+        }
+        #endScreen button {
+            margin-top: 30px;
+            font-size: 22px;
+            padding: 15px 35px;
+        }
+
+        /* Level Up Overlay */
+        #levelUpOverlay {
+            display: none; /* TETAPKAN INI SEBAGAI DEFAULT */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #8aff8a;
+            font-size: 3.5em; /* Ukuran teks lebih besar */
+            font-weight: bold;
+            justify-content: center; /* Akan diatur oleh JS saat tampil */
+            align-items: center; /* Akan diatur oleh JS saat tampil */
+            text-shadow: 0 0 20px rgba(138, 255, 138, 0.8);
+            z-index: 1000;
+            border-radius: 15px; /* Sesuai dengan container utama */
+            animation: fadeInScale 0.8s ease-out; /* Animasi */
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+
+        /* Responsif */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.6em;
+            }
+            .char-option, button {
+                font-size: 16px;
+                padding: 10px 18px;
+            }
+            .letter-box {
+                width: 55px;
+                height: 55px;
+                line-height: 55px;
+                font-size: 26px;
+            }
+            #answerArea {
+                font-size: 30px;
+                letter-spacing: 5px;
+            }
+            #game3D {
+                height: 300px; /* Adjust height for smaller screens */
+            }
+            #levelUpOverlay {
+                font-size: 2.5em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.4em;
+            }
+            .game-screen-container {
+                padding: 20px;
+            }
+            input[type="text"] {
+                padding: 10px;
+                font-size: 15px;
+            }
+            .char-option, button {
+                font-size: 14px;
+                padding: 8px 15px;
+                margin: 5px;
+            }
+            .letter-box {
+                width: 45px;
+                height: 45px;
+                line-height: 45px;
+                font-size: 22px;
+            }
+            #answerArea {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+            #game3D {
+                height: 250px;
+            }
+            #levelUpOverlay {
+                font-size: 1.8em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="gameContainer" class="game-screen-container">
+    <div id="levelUpOverlay" style="
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #8aff8a;
+        font-size: 3.5em; /* Ukuran teks lebih besar */
+        font-weight: bold;
+        /* Hapus 'display: flex;' di sini */
+        justify-content: center;
+        align-items: center;
+        text-shadow: 0 0 20px rgba(138, 255, 138, 0.8);
+        z-index: 1000;
+        border-radius: 15px; /* Sesuai dengan container utama */
+        animation: fadeInScale 0.8s ease-out; /* Animasi */
+    ">
+        LEVEL BERIKUTNYA!
+    </div>
+
+    <div id="startScreen">
+        <h2>WELCOME HYCARBGUESS</h2>
+        <p>NAMA:</p>
+        <input type="text" id="playerName" placeholder="Nama kamu..." autocomplete="off" />
+
+        <p>Pilih Karakter:</p>
+        <div id="characterSelect">
+            <div class="char-option" data-char="Ilmuwan" tabindex="0">Ilmuwan</div>
+            <div class="char-option" data-char="Robot" tabindex="0">Robot</div>
+            <div class="char-option" data-char="Alien" tabindex="0">Alien</div>
+        </div>
+        <button id="startBtn">Mulai Game</button>
+    </div>
+
+    <div id="mainGame">
+        <h1>Tebak Senyawa Hidrokarbon 3D</h1>
+        <p>Pemain: <span id="playerInfo"></span></p>
+        <div id="game3D"></div>
+
+        <div id="wordContainer"></div>
+        <div id="answerArea"></div>
+        <div>
+            <button id="submitBtn">Submit</button>
+            <button id="resetBtn">Reset Jawaban</button>
+        </div>
+
+        <div id="infoBar">
+            Level: <span id="level">1</span> (Soal: <span id="questionCount">0</span>/5) |
+            Nyawa: <span id="lives">3</span>
+        </div>
+        <div id="message"></div>
+        <div id="explanation"></div>
+    </div>
+
+    <div id="endScreen">
+        <h2 id="endTitle"></h2>
+        <p id="endMessage"></p>
+        <button id="restartBtn">Main Lagi</button>
+    </div>
+</div>
+
+<audio id="benarSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="salahSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+<audio id="levelUpSound" src="https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg"></audio>
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
+<script>
+(() => {
+    // Data molekul dengan posisi atom dan ikatan untuk 3D rendering
+    const moleculesByDifficulty = {
+        // Level 1: Alkana Sederhana (C1-C5)
+        easy: [
+            {
+                name: "metana",
+                explanation: "Metana (CH₄) adalah hidrokarbon alkana paling sederhana, terdiri dari satu atom karbon dan empat atom hidrogen. Ini adalah komponen utama gas alam dan gas rawa.",
+                atoms: [
+                    { type: "C", x: 0, y: 0, z: 0 }, { type: "H", x: 1, y: 0, z: 0 }, { type: "H", x: -1, y: 0, z: 0 },
+                    { type: "H", x: 0, y: 1, z: 0 }, { type: "H", x: 0, y: -1, z: 0 }
+                ],
+                bonds: [
+                    [0,1],[0,2],[0,3],[0,4]
+                ]
+            },
+            {
+                name: "etana",
+                explanation: "Etana (C₂H₆) adalah alkana kedua paling sederhana, dengan dua atom karbon yang terhubung dan masing-masing terikat pada hidrogen. Digunakan sebagai bahan baku dalam produksi etena.",
+                atoms: [
+                    { type: "C", x: -0.7, y: 0, z: 0 }, { type: "C", x: 0.7, y: 0, z: 0 },
+                    { type: "H", x: -1.2, y: 1, z: 0 }, { type: "H", x: -1.2, y: -1, z: 0 }, { type: "H", x: -1.2, y: 0, z: 1 },
+                    { type: "H", x: 1.2, y: 1, z: 0 }, { type: "H", x: 1.2, y: -1, z: 0 }, { type: "H", x: 1.2, y: 0, z: -1 }
+                ],
+                bonds: [
+                    [0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[1,7]
+                ]
+            },
+            {
+                name: "propana",
+                explanation: "Propana (C₃H₈) adalah alkana dengan tiga atom karbon. Dikenal sebagai bahan bakar LPG (Liquefied Petroleum Gas) dan propelan aerosol.",
+                atoms: [
+                    { type: "C", x: -1.4, y: 0, z: 0 }, { type: "C", x: 0, y: 0, z: 0 }, { type: "C", x: 1.4, y: 0, z: 0 },
+                    { type: "H", x: -1.9, y: 1, z: 0 }, { type: "H", x: -1.9, y: -1, z: 0 }, { type: "H", x: -1.9, y: 0, z: 1 },
+                    { type: "H", x: 0.5, y: 1, z: 0 }, { type: "H", x: 0.5, y: -1, z: 0 },
+                    { type: "H", x: 1.9, y: 1, z: 0 }, { type: "H", x: 1.9, y: -1, z: 0 }, { type: "H", x: 1.9, y: 0, z: -1 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[0,3],[0,4],[0,5],[1,6],[1,7],[2,8],[2,9],[2,10]
+                ]
+            },
+            {
+                name: "butana",
+                explanation: "Butana (C₄H₁₀) adalah alkana dengan empat atom karbon. Digunakan sebagai bahan bakar, dalam korek api, dan sebagai refrigeran.",
+                atoms: [
+                    { type: "C", x: -2.1, y: 0, z: 0 }, { type: "C", x: -0.7, y: 0, z: 0 }, { type: "C", x: 0.7, y: 0, z: 0 }, { type: "C", x: 2.1, y: 0, z: 0 },
+                    { type: "H", x: -2.6, y: 1, z: 0 }, { type: "H", x: -2.6, y: -1, z: 0 }, { type: "H", x: -2.6, y: 0, z: 1 },
+                    { type: "H", x: -0.2, y: 1, z: 0 }, { type: "H", x: -0.2, y: -1, z: 0 },
+                    { type: "H", x: 1.2, y: 1, z: 0 }, { type: "H", x: 1.2, y: -1, z: 0 },
+                    { type: "H", x: 2.6, y: 1, z: 0 }, { type: "H", x: 2.6, y: -1, z: 0 }, { type: "H", x: 2.6, y: 0, z: -1 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3], [0,4],[0,5],[0,6], [1,7],[1,8], [2,9],[2,10], [3,11],[3,12],[3,13]
+                ]
+            },
+            {
+                name: "pentana",
+                explanation: "Pentana (C₅H₁₂) adalah alkana dengan lima atom karbon. Ini adalah komponen bensin dan digunakan sebagai pelarut.",
+                atoms: [
+                    { type: "C", x: -2.8, y: 0, z: 0 }, { type: "C", x: -1.4, y: 0, z: 0 }, { type: "C", x: 0, y: 0, z: 0 },
+                    { type: "C", x: 1.4, y: 0, z: 0 }, { type: "C", x: 2.8, y: 0, z: 0 },
+                    { type: "H", x: -3.3, y: 1, z: 0 }, { type: "H", x: -3.3, y: -1, z: 0 }, { type: "H", x: -3.3, y: 0, z: 1 },
+                    { type: "H", x: -1.9, y: 1, z: 0 }, { type: "H", x: -1.9, y: -1, z: 0 },
+                    { type: "H", x: 0.5, y: 1, z: 0 }, { type: "H", x: 0.5, y: -1, z: 0 },
+                    { type: "H", x: 1.9, y: 1, z: 0 }, { type: "H", x: 1.9, y: -1, z: 0 },
+                    { type: "H", x: 3.3, y: 1, z: 0 }, { type: "H", x: 3.3, y: -1, z: 0 }, { type: "H", x: 3.3, y: 0, z: -1 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4], [0,5],[0,6],[0,7], [1,8],[1,9], [2,10],[2,11], [3,12],[3,13], [4,14],[4,15],[4,16]
+                ]
+            }
+        ],
+        // Level 2: Alkana (C6-C10)
+        medium: [
+            {
+                name: "heksana",
+                explanation: "Heksana (C₆H₁₄) adalah alkana enam karbon, cairan tak berwarna yang digunakan sebagai pelarut non-polar. Umumnya ditemukan dalam bensin.",
+                atoms: [
+                    {type: "C", x: -3.5, y: 0, z: 0}, {type: "C", x: -2.1, y: 0, z: 0}, {type: "C", x: -0.7, y: 0, z: 0},
+                    {type: "C", x: 0.7, y: 0, z: 0}, {type: "C", x: 2.1, y: 0, z: 0}, {type: "C", x: 3.5, y: 0, z: 0},
+                    {type: "H", x: -4, y: 1, z: 0}, {type: "H", x: -4, y: -1, z: 0}, {type: "H", x: -4, y: 0, z: 1},
+                    {type: "H", x: -2.6, y: 1, z: 0}, {type: "H", x: -2.6, y: -1, z: 0},
+                    {type: "H", x: -1.2, y: 1, z: 0}, {type: "H", x: -1.2, y: -1, z: 0},
+                    {type: "H", x: 1.2, y: 1, z: 0}, {type: "H", x: 1.2, y: -1, z: 0},
+                    {type: "H", x: 2.6, y: 1, z: 0}, {type: "H", x: 2.6, y: -1, z: 0},
+                    {type: "H", x: 4, y: 1, z: 0}, {type: "H", x: 4, y: -1, z: 0}, {type: "H", x: 4, y: 0, z: -1}
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],
+                    [0,6],[0,7],[0,8], [1,9],[1,10], [2,11],[2,12], [3,13],[3,14], [4,15],[4,16], [5,17],[5,18],[5,19]
+                ]
+            },
+            {
+                name: "heptana",
+                explanation: "Heptana (C₇H₁₆) adalah alkana rantai lurus dengan tujuh atom karbon. Digunakan sebagai komponen utama bensin dan pelarut.",
+                atoms: [
+                    {type: "C", x: -4.2, y: 0, z: 0}, {type: "C", x: -2.8, y: 0, z: 0}, {type: "C", x: -1.4, y: 0, z: 0},
+                    {type: "C", x: 0, y: 0, z: 0}, {type: "C", x: 1.4, y: 0, z: 0}, {type: "C", x: 2.8, y: 0, z: 0}, {type: "C", x: 4.2, y: 0, z: 0},
+                    {type: "H", x: -4.7, y: 1, z: 0}, {type: "H", x: -4.7, y: -1, z: 0}, {type: "H", x: -4.7, y: 0, z: 1},
+                    {type: "H", x: -3.3, y: 1, z: 0}, {type: "H", x: -3.3, y: -1, z: 0},
+                    {type: "H", x: -1.9, y: 1, z: 0}, {type: "H", x: -1.9, y: -1, z: 0},
+                    {type: "H", x: 0.5, y: 1, z: 0}, {type: "H", x: 0.5, y: -1, z: 0},
+                    {type: "H", x: 1.9, y: 1, z: 0}, {type: "H", x: 1.9, y: -1, z: 0},
+                    {type: "H", x: 3.3, y: 1, z: 0}, {type: "H", x: 3.3, y: -1, z: 0},
+                    {type: "H", x: 4.7, y: 1, z: 0}, {type: "H", x: 4.7, y: -1, z: 0}, {type: "H", x: 4.7, y: 0, z: -1}
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],
+                    [0,7],[0,8],[0,9], [1,10],[1,11], [2,12],[2,13], [3,14],[3,15], [4,16],[4,17], [5,18],[5,19], [6,20],[6,21],[6,22]
+                ]
+            },
+            {
+                name: "oktana",
+                explanation: "Oktana (C₈H₁₈) adalah alkana dengan delapan atom karbon. Merupakan komponen bensin yang penting, angka oktan menunjukkan ketahanannya terhadap 'ketukan' mesin.",
+                atoms: [
+                    {type: "C", x: -4.9, y: 0, z: 0}, {type: "C", x: -3.5, y: 0, z: 0}, {type: "C", x: -2.1, y: 0, z: 0}, {type: "C", x: -0.7, y: 0, z: 0},
+                    {type: "C", x: 0.7, y: 0, z: 0}, {type: "C", x: 2.1, y: 0, z: 0}, {type: "C", x: 3.5, y: 0, z: 0}, {type: "C", x: 4.9, y: 0, z: 0},
+                    // H atoms (simplified positions for longer chains)
+                    {type: "H", x: -5.4, y: 1, z: 0}, {type: "H", x: -5.4, y: -1, z: 0}, {type: "H", x: -5.4, y: 0, z: 1}, // C1
+                    {type: "H", x: -4, y: 1, z: 0}, {type: "H", x: -4, y: -1, z: 0}, // C2
+                    {type: "H", x: -2.6, y: 1, z: 0}, {type: "H", x: -2.6, y: -1, z: 0}, // C3
+                    {type: "H", x: -1.2, y: 1, z: 0}, {type: "H", x: -1.2, y: -1, z: 0}, // C4
+                    {type: "H", x: 1.2, y: 1, z: 0}, {type: "H", x: 1.2, y: -1, z: 0}, // C5
+                    {type: "H", x: 2.6, y: 1, z: 0}, {type: "H", x: 2.6, y: -1, z: 0}, // C6
+                    {type: "H", x: 4, y: 1, z: 0}, {type: "H", x: 4, y: -1, z: 0}, // C7
+                    {type: "H", x: 5.4, y: 1, z: 0}, {type: "H", x: 5.4, y: -1, z: 0}, {type: "H", x: 5.4, y: 0, z: -1}  // C8
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],
+                    [0,8],[0,9],[0,10], [1,11],[1,12], [2,13],[2,14], [3,15],[3,16],
+                    [4,17],[4,18], [5,19],[5,20], [6,21],[6,22], [7,23],[7,24],[7,25]
+                ]
+            },
+            {
+                name: "nonana",
+                explanation: "Nonana (C₉H₂₀) adalah alkana rantai lurus dengan sembilan atom karbon. Digunakan sebagai komponen dalam bahan bakar jet dan pelarut.",
+                atoms: [
+                    {type: "C", x: -5.6, y: 0, z: 0}, {type: "C", x: -4.2, y: 0, z: 0}, {type: "C", x: -2.8, y: 0, z: 0}, {type: "C", x: -1.4, y: 0, z: 0},
+                    {type: "C", x: 0, y: 0, z: 0}, {type: "C", x: 1.4, y: 0, z: 0}, {type: "C", x: 2.8, y: 0, z: 0}, {type: "C", x: 4.2, y: 0, z: 0},
+                    {type: "C", x: 5.6, y: 0, z: 0},
+                    // H atoms (simplified positions)
+                    {type: "H", x: -6.1, y: 1, z: 0}, {type: "H", x: -6.1, y: -1, z: 0}, {type: "H", x: -6.1, y: 0, z: 1}, // C1
+                    {type: "H", x: -4.7, y: 1, z: 0}, {type: "H", x: -4.7, y: -1, z: 0}, // C2
+                    {type: "H", x: -3.3, y: 1, z: 0}, {type: "H", x: -3.3, y: -1, z: 0}, // C3
+                    {type: "H", x: -1.9, y: 1, z: 0}, {type: "H", x: -1.9, y: -1, z: 0}, // C4
+                    {type: "H", x: 0.5, y: 1, z: 0}, {type: "H", x: 0.5, y: -1, z: 0}, // C5
+                    {type: "H", x: 1.9, y: 1, z: 0}, {type: "H", x: 1.9, y: -1, z: 0}, // C6
+                    {type: "H", x: 3.3, y: 1, z: 0}, {type: "H", x: 3.3, y: -1, z: 0}, // C7
+                    {type: "H", x: 4.7, y: 1, z: 0}, {type: "H", x: 4.7, y: -1, z: 0}, // C8
+                    {type: "H", x: 6.1, y: 1, z: 0}, {type: "H", x: 6.1, y: -1, z: 0}, {type: "H", x: 6.1, y: 0, z: -1}  // C9
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],
+                    [0,9],[0,10],[0,11], [1,12],[1,13], [2,14],[2,15], [3,16],[3,17],
+                    [4,18],[4,19], [5,20],[5,21], [6,22],[6,23], [7,24],[7,25], [8,26],[8,27],[8,28]
+                ]
+            },
+            {
+                name: "dekana",
+                explanation: "Dekana (C₁₀H₂₂) adalah alkana dengan sepuluh atom karbon. Ini adalah komponen utama dalam bensin dan minyak tanah.",
+                atoms: [
+                    {type: "C", x: -6.3, y: 0, z: 0}, {type: "C", x: -4.9, y: 0, z: 0}, {type: "C", x: -3.5, y: 0, z: 0}, {type: "C", x: -2.1, y: 0, z: 0},
+                    {type: "C", x: -0.7, y: 0, z: 0}, {type: "C", x: 0.7, y: 0, z: 0}, {type: "C", x: 2.1, y: 0, z: 0}, {type: "C", x: 3.5, y: 0, z: 0},
+                    {type: "C", x: 4.9, y: 0, z: 0}, {type: "C", x: 6.3, y: 0, z: 0},
+                    // H atoms (simplified positions)
+                    {type: "H", x: -6.8, y: 1, z: 0}, {type: "H", x: -6.8, y: -1, z: 0}, {type: "H", x: -6.8, y: 0, z: 1}, // C1
+                    {type: "H", x: -5.4, y: 1, z: 0}, {type: "H", x: -5.4, y: -1, z: 0}, // C2
+                    {type: "H", x: -4, y: 1, z: 0}, {type: "H", x: -4, y: -1, z: 0}, // C3
+                    {type: "H", x: -2.6, y: 1, z: 0}, {type: "H", x: -2.6, y: -1, z: 0}, // C4
+                    {type: "H", x: -1.2, y: 1, z: 0}, {type: "H", x: -1.2, y: -1, z: 0}, // C5
+                    {type: "H", x: 1.2, y: 1, z: 0}, {type: "H", x: 1.2, y: -1, z: 0}, // C6
+                    {type: "H", x: 2.6, y: 1, z: 0}, {type: "H", x: 2.6, y: -1, z: 0}, // C7
+                    {type: "H", x: 4, y: 1, z: 0}, {type: "H", x: 4, y: -1, z: 0}, // C8
+                    {type: "H", x: 5.4, y: 1, z: 0}, {type: "H", x: 5.4, y: -1, z: 0}, // C9
+                    {type: "H", x: 6.8, y: 1, z: 0}, {type: "H", x: 6.8, y: -1, z: 0}, {type: "H", x: 6.8, y: 0, z: -1}  // C10
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],
+                    [0,10],[0,11],[0,12], [1,13],[1,14], [2,15],[2,16], [3,17],[3,18],
+                    [4,19],[4,20], [5,21],[5,22], [6,23],[6,24], [7,25],[7,26],
+                    [8,27],[8,28], [9,29],[9,30],[9,31]
+                ]
+            }
+        ],
+        // Level 3: Alkana Bercabang & Sikloalkana sederhana
+        hard: [
+            {
+                name: "isobutana", // 2-methylpropane
+                explanation: "Isobutana (C₄H₁₀) adalah isomer butana dengan struktur bercabang. Ini sering digunakan sebagai refrigeran dan bahan bakar.",
+                atoms: [
+                    { type: "C", x: 0, y: 0, z: 0 }, // Central C
+                    { type: "C", x: 1, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: 0.8, z: 0 },
+                    { type: "C", x: -0.5, y: -0.8, z: 0 },
+                    // H atoms for central C
+                    { type: "H", x: 0, y: 0, z: 1 },
+                    // H atoms for other carbons
+                    { type: "H", x: 1.5, y: 0.5, z: 0 }, { type: "H", x: 1.5, y: -0.5, z: 0 }, { type: "H", x: 0.8, y: 0, z: 1 },
+                    { type: "H", x: -1, y: 1.3, z: 0 }, { type: "H", x: 0, y: 1.3, z: 0 }, { type: "H", x: -0.5, y: 0.8, z: 1 },
+                    { type: "H", x: -1, y: -1.3, z: 0 }, { type: "H", x: 0, y: -1.3, z: 0 }, { type: "H", x: -0.5, y: -0.8, z: 1 }
+                ],
+                bonds: [
+                    [0,1],[0,2],[0,3], // C-C bonds
+                    [0,4], // Central C-H
+                    [1,5],[1,6],[1,7], // C1-H
+                    [2,8],[2,9],[2,10], // C2-H
+                    [3,11],[3,12],[3,13]  // C3-H
+                ]
+            },
+            {
+                name: "siklopentana",
+                explanation: "Siklopentana (C₅H₁₀) adalah sikloalkana dengan cincin lima atom karbon. Biasanya digunakan sebagai pelarut laboratorium.",
+                atoms: [
+                    {type: "C", x: 0, y: 1.4, z: 0},
+                    {type: "C", x: 1.3, y: 0.5, z: 0},
+                    {type: "C", x: 0.8, y: -1.1, z: 0},
+                    {type: "C", x: -0.8, y: -1.1, z: 0},
+                    {type: "C", x: -1.3, y: 0.5, z: 0},
+                    // Hidrogen
+                    {type: "H", x: 0, y: 1.9, z: 0.5}, {type: "H", x: 0, y: 1.9, z: -0.5},
+                    {type: "H", x: 1.8, y: 0.8, z: 0.5}, {type: "H", x: 1.8, y: 0.8, z: -0.5},
+                    {type: "H", x: 1.3, y: -1.4, z: 0.5}, {type: "H", x: 1.3, y: -1.4, z: -0.5},
+                    {type: "H", x: -1.3, y: -1.4, z: 0.5}, {type: "H", x: -1.3, y: -1.4, z: -0.5},
+                    {type: "H", x: -1.8, y: 0.8, z: 0.5}, {type: "H", x: -1.8, y: 0.8, z: -0.5}
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,0], // C-C ring
+                    [0,5],[0,6], [1,7],[1,8], [2,9],[2,10], [3,11],[3,12], [4,13],[4,14]
+                ]
+            },
+            {
+                name: "sikloheksana",
+                explanation: "Sikloheksana (C₆H₁₂) adalah sikloalkana dengan cincin enam atom karbon. Ini adalah senyawa organik yang banyak digunakan dalam industri.",
+                atoms: [
+                    {type: "C", x: 0.8, y: 1.4, z: 0}, {type: "C", x: 1.6, y: 0, z: 0}, {type: "C", x: 0.8, y: -1.4, z: 0},
+                    {type: "C", x: -0.8, y: -1.4, z: 0}, {type: "C", x: -1.6, y: 0, z: 0}, {type: "C", x: -0.8, y: 1.4, z: 0},
+                    // Hidrogen
+                    {type: "H", x: 0.8, y: 1.9, z: 0.5}, {type: "H", x: 0.8, y: 1.9, z: -0.5},
+                    {type: "H", x: 2.1, y: 0.5, z: 0.5}, {type: "H", x: 2.1, y: -0.5, z: -0.5},
+                    {type: "H", x: 0.8, y: -1.9, z: 0.5}, {type: "H", x: 0.8, y: -1.9, z: -0.5},
+                    {type: "H", x: -0.8, y: -1.9, z: 0.5}, {type: "H", x: -0.8, y: -1.9, z: -0.5},
+                    {type: "H", x: -2.1, y: 0.5, z: 0.5}, {type: "H", x: -2.1, y: -0.5, z: -0.5},
+                    {type: "H", x: -0.8, y: 1.9, z: 0.5}, {type: "H", x: -0.8, y: 1.9, z: -0.5}
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // C-C ring
+                    [0,6],[0,7], [1,8],[1,9], [2,10],[2,11], [3,12],[3,13], [4,14],[4,15], [5,16],[5,17]
+                ]
+            },
+            {
+                name: "isooktana", // 2,2,4-trimethylpentane
+                explanation: "Isooktana (C₈H₁₈) adalah alkana bercabang yang menjadi standar untuk angka oktan 100 pada bensin, menunjukkan kualitas anti-ketukan yang tinggi.",
+                atoms: [
+                    {type: "C", x: -2.1, y: 0, z: 0}, // C1
+                    {type: "C", x: -0.7, y: 0, z: 0}, // C2 (branch point)
+                    {type: "C", x: 0, y: 1.4, z: 0},  // Methyl 1
+                    {type: "C", x: 0, y: -1.4, z: 0}, // Methyl 2
+                    {type: "C", x: 0.7, y: 0, z: 0},  // C3
+                    {type: "C", x: 2.1, y: 0, z: 0},  // C4 (branch point)
+                    {type: "C", x: 2.8, y: 1.4, z: 0}, // Methyl 3
+                    {type: "C", x: 3.5, y: 0, z: 0},  // C5
+
+                    // Hidrogen (posisi disederhanakan)
+                    {type: "H", x: -2.6, y: 1, z: 0}, {type: "H", x: -2.6, y: -1, z: 0}, {type: "H", x: -2.6, y: 0, z: 1}, // C1
+                    {type: "H", x: -0.2, y: 0, z: 1}, // C2
+                    {type: "H", x: 0.5, y: 1.9, z: 0}, {type: "H", x: -0.5, y: 1.9, z: 0}, {type: "H", x: 0, y: 1.4, z: 1}, // Methyl 1
+                    {type: "H", x: 0.5, y: -1.9, z: 0}, {type: "H", x: -0.5, y: -1.9, z: 0}, {type: "H", x: 0, y: -1.4, z: 1}, // Methyl 2
+                    {type: "H", x: 1.2, y: 1, z: 0}, {type: "H", x: 1.2, y: -1, z: 0}, // C3
+                    {type: "H", x: 2.6, y: 0, z: 1}, // C4
+                    {type: "H", x: 3.3, y: 1.9, z: 0}, {type: "H", x: 2.3, y: 1.9, z: 0}, {type: "H", x: 2.8, y: 1.4, z: 1}, // Methyl 3
+                    {type: "H", x: 4, y: 1, z: 0}, {type: "H", x: 4, y: -1, z: 0}, {type: "H", x: 4, y: 0, z: -1} // C5
+                ],
+                bonds: [
+                    [0,1],[1,2],[1,3],[1,4],[4,5],[5,6],[5,7], // C-C skeleton
+                    [0,8],[0,9],[0,10], // C1-H
+                    [1,11], // C2-H
+                    [2,12],[2,13],[2,14], // Methyl 1-H
+                    [3,15],[3,16],[3,17], // Methyl 2-H
+                    [4,18],[4,19], // C3-H
+                    [5,20], // C4-H
+                    [6,21],[6,22],[6,23], // Methyl 3-H
+                    [7,24],[7,25],[7,26] // C5-H
+                ]
+            },
+             {
+                name: "benzena", // C6H6 - Pertama kali munculkan ikatan rangkap dua
+                explanation: "Benzena (C₆H₆) adalah senyawa aromatik sederhana dengan cincin enam atom karbon dan ikatan rangkap dua terkonjugasi. Ini adalah bahan baku penting dalam industri kimia.",
+                atoms: [
+                    { type: "C", x: 1.0, y: 0, z: 0 },
+                    { type: "C", x: 0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -1.0, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    { type: "H", x: 1.8, y: 0, z: 0 },
+                    { type: "H", x: 0.9, y: 1.5, z: 0 },
+                    { type: "H", x: -0.9, y: 1.5, z: 0 },
+                    { type: "H", x: -1.8, y: 0, z: 0 },
+                    { type: "H", x: -0.9, y: -1.5, z: 0 },
+                    { type: "H", x: 0.9, y: -1.5, z: 0 }
+                ],
+                bonds: [
+                    // C-C (alternating single/double visual for simplicity, conceptually delocalized)
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0],
+                    // C-H bonds
+                    [0,6],[1,7],[2,8],[3,9],[4,10],[5,11]
+                ]
+            }
+        ],
+        // Level 4: Alkena/Alkuna & Turunan sederhana
+        very_hard: [
+            {
+                name: "etena", // Alkene (double bond)
+                explanation: "Etena (C₂H₄), juga dikenal sebagai etilena, adalah hidrokarbon tak jenuh dengan ikatan rangkap dua C=C. Ini adalah bahan baku paling penting dalam industri petrokimia.",
+                atoms: [
+                    { type: "C", x: -0.6, y: 0, z: 0 },
+                    { type: "C", x: 0.6, y: 0, z: 0 },
+                    { type: "H", x: -1.2, y: 0.8, z: 0 },
+                    { type: "H", x: -1.2, y: -0.8, z: 0 },
+                    { type: "H", x: 1.2, y: 0.8, z: 0 },
+                    { type: "H", x: 1.2, y: -0.8, z: 0 }
+                ],
+                bonds: [
+                    [0,1], // Main C-C bond (represents double for visual simplicity)
+                    [0,2],[0,3], // C-H bonds
+                    [1,4],[1,5] // C-H bonds
+                ]
+            },
+            {
+                name: "propuna", // Alkyne (triple bond)
+                explanation: "Propuna (C₃H₄), juga dikenal sebagai metilasetilena, adalah alkuna sederhana dengan ikatan rangkap tiga C≡C. Digunakan dalam pengelasan dan pembakaran.",
+                atoms: [
+                    { type: "C", x: -1.2, y: 0, z: 0 }, // CH3
+                    { type: "C", x: 0, y: 0, z: 0 },    // Triple bond C
+                    { type: "C", x: 1.2, y: 0, z: 0 },  // Triple bond C
+                    { type: "H", x: -1.7, y: 0.8, z: 0 }, { type: "H", x: -1.7, y: -0.8, z: 0 }, { type: "H", x: -1.7, y: 0, z: 0.8 }, // CH3
+                    { type: "H", x: 1.7, y: 0, z: 0 } // Terminal H
+                ],
+                bonds: [
+                    [0,1],[1,2], // C-C bonds (represents triple for visual simplicity)
+                    [0,3],[0,4],[0,5], // CH3-H bonds
+                    [2,6] // Terminal C-H
+                ]
+            },
+             {
+                name: "toluena", // Aromatic with methyl group
+                explanation: "Toluena (C₇H₈) adalah senyawa aromatik yang terdiri dari cincin benzena yang terikat pada gugus metil (-CH₃). Digunakan sebagai pelarut dan bahan baku TNT.",
+                atoms: [
+                    // Benzene ring
+                    { type: "C", x: 1.0, y: 0, z: 0 },
+                    { type: "C", x: 0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -1.0, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    // Methyl group
+                    { type: "C", x: 1.5, y: 1.7, z: 0 }, // Attached to C2 (index 1)
+                    // Hydrogens
+                    { type: "H", x: 1.8, y: 0, z: 0 }, // H for C1 (index 0)
+                    { type: "H", x: -0.9, y: 1.5, z: 0 }, // H for C3 (index 2)
+                    { type: "H", x: -1.8, y: 0, z: 0 }, // H for C4 (index 3)
+                    { type: "H", x: -0.9, y: -1.5, z: 0 }, // H for C5 (index 4)
+                    { type: "H", x: 0.9, y: -1.5, z: 0 }, // H for C6 (index 5)
+                    // H for Methyl
+                    { type: "H", x: 2.0, y: 2.2, z: 0 }, { type: "H", x: 1.0, y: 2.2, z: 0 }, { type: "H", x: 1.5, y: 1.7, z: 0.8 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Ring
+                    [1,6], // C-CH3
+                    [0,7], [2,8], [3,9], [4,10], [5,11], // Ring C-H
+                    [6,12],[6,13],[6,14] // CH3-H
+                ]
+            },
+            {
+                name: "asetilena", // C2H2 - Simplest alkyne
+                explanation: "Asetilena (C₂H₂), juga dikenal sebagai etuna, adalah alkuna paling sederhana, memiliki ikatan rangkap tiga C≡C. Digunakan secara luas dalam pengelasan oksi-asetilena.",
+                atoms: [
+                    { type: "C", x: -0.6, y: 0, z: 0 },
+                    { type: "C", x: 0.6, y: 0, z: 0 },
+                    { type: "H", x: -1.2, y: 0, z: 0 },
+                    { type: "H", x: 1.2, y: 0, z: 0 }
+                ],
+                bonds: [
+                    [0,1], // C-C bond (represents triple for visual simplicity)
+                    [0,2], // C-H
+                    [1,3]  // C-H
+                ]
+            },
+            {
+                name: "propena", // C3H6 - Simplest alkene with 3 carbons
+                explanation: "Propena (C₃H₆), juga dikenal sebagai propilena, adalah alkena dengan tiga atom karbon dan satu ikatan rangkap dua. Ini adalah bahan baku penting untuk polipropilena.",
+                atoms: [
+                    { type: "C", x: -1.0, y: 0, z: 0 }, // CH3
+                    { type: "C", x: 0, y: 0, z: 0 },    // C=C part
+                    { type: "C", x: 1.0, y: 0, z: 0 },  // C=C part
+                    { type: "H", x: -1.5, y: 0.8, z: 0 }, { type: "H", x: -1.5, y: -0.8, z: 0 }, { type: "H", x: -1.5, y: 0, z: 0.8 }, // CH3
+                    { type: "H", x: 0.5, y: 0.8, z: 0 }, // H for C at index 1
+                    { type: "H", x: 1.5, y: 0.8, z: 0 }, { type: "H", x: 1.5, y: -0.8, z: 0 } // H for C at index 2
+                ],
+                bonds: [
+                    [0,1], // Single bond
+                    [1,2], // Double bond (represented as single)
+                    [0,3],[0,4],[0,5], // CH3-H
+                    [1,6], // C-H on double bond
+                    [2,7],[2,8] // C-H on double bond
+                ]
+            }
+        ],
+        // Level 5: Senyawa Kompleks & Aromatik lainnya
+        expert: [
+            {
+                name: "naftalena", // C10H8 - Two fused benzene rings
+                explanation: "Naftalena (C₁₀H₈) adalah hidrokarbon polisiklik aromatik dengan dua cincin benzena yang menyatu. Ini adalah komponen utama kapur barus.",
+                atoms: [
+                    // Left ring (simplified)
+                    { type: "C", x: -1.5, y: 0.866, z: 0 }, { type: "C", x: -0.5, y: 1.732, z: 0 },
+                    { type: "C", x: 0.5, y: 1.732, z: 0 }, { type: "C", x: 1.5, y: 0.866, z: 0 },
+                    { type: "C", x: 1.0, y: 0, z: 0 }, { type: "C", x: 0.0, y: 0, z: 0 }, // Fused carbons
+                    { type: "C", x: -1.0, y: 0, z: 0 }, { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 }, { type: "C", x: 1.5, y: -0.866, z: 0 },
+                    // Hydrogens
+                    { type: "H", x: -2.0, y: 1.2, z: 0 }, { type: "H", x: -0.5, y: 2.2, z: 0 },
+                    { type: "H", x: 0.5, y: 2.2, z: 0 }, { type: "H", x: 2.0, y: 1.2, z: 0 },
+                    { type: "H", x: -1.0, y: -1.2, z: 0 }, { type: "H", x: -0.5, y: -1.7, z: 0 },
+                    { type: "H", x: 0.5, y: -1.7, z: 0 }, { type: "H", x: 1.0, y: -1.2, z: 0 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Left ring
+                    [5,6],[6,7],[7,8],[8,9],[9,4], // Right ring
+                    // Fused bond [4,5] is shared
+                    [0,10],[1,11],[2,12],[3,13], // H for outer carbons
+                    [6,14],[7,15],[8,16],[9,17]
+                ]
+            },
+            {
+                name: "antrasena", // C14H10 - Three fused benzene rings
+                explanation: "Antrasena (C₁₄H₁₀) adalah hidrokarbon aromatik polisiklik dengan tiga cincin benzena yang menyatu secara linier. Digunakan dalam produksi pewarna dan insektisida.",
+                atoms: [
+                    // Left ring
+                    { type: "C", x: -3.0, y: 0.866, z: 0 }, { type: "C", x: -2.0, y: 1.732, z: 0 },
+                    { type: "C", x: -1.0, y: 1.732, z: 0 }, { type: "C", x: 0.0, y: 0.866, z: 0 }, // Fused
+                    { type: "C", x: -0.5, y: 0, z: 0 }, { type: "C", x: -1.5, y: 0, z: 0 }, // Fused
+                    // Middle ring (shared with left and right)
+                    { type: "C", x: 0.5, y: 0, z: 0 }, { type: "C", x: 1.5, y: 0, z: 0 },
+                    { type: "C", x: 2.5, y: 0.866, z: 0 }, { type: "C", x: 1.0, y: 1.732, z: 0 }, // Fused
+                    // Right ring
+                    { type: "C", x: 3.5, y: 0, z: 0 }, { type: "C", x: 2.5, y: -0.866, z: 0 },
+                    { type: "C", x: 1.5, y: -0.866, z: 0 }, { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    // Hydrogens
+                    { type: "H", x: -3.5, y: 1.2, z: 0 }, { type: "H", x: -2.0, y: 2.2, z: 0 },
+                    { type: "H", x: -1.0, y: 2.2, z: 0 }, { type: "H", x: 0.0, y: 1.2, z: 0 },
+                    { type: "H", x: 3.0, y: 1.2, z: 0 }, { type: "H", x: 1.0, y: 2.2, z: 0 },
+                    { type: "H", x: 4.0, y: 0, z: 0 }, { type: "H", x: 3.0, y: -1.2, z: 0 },
+                    { type: "H", x: 2.0, y: -1.2, z: 0 }, { type: "H", x: 1.0, y: -1.2, z: 0 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Left ring
+                    [3,6],[6,7],[7,8],[8,9],[9,3], // Middle ring
+                    [7,10],[10,11],[11,12],[12,13],[13,7], // Right ring
+                    // Hydrogens
+                    [0,14],[1,15],[2,16],[3,17], [8,18],[9,19],
+                    [10,20],[11,21],[12,22],[13,23]
+                ]
+            },
+            {
+                name: "fenol", // Benzene with -OH group
+                explanation: "Fenol (C₆H₅OH) adalah senyawa organik aromatik dengan gugus hidroksil (-OH) yang terikat langsung pada cincin benzena. Digunakan sebagai disinfektan dan dalam produksi polimer.",
+                atoms: [
+                    // Benzene ring
+                    { type: "C", x: 1.0, y: 0, z: 0 },
+                    { type: "C", x: 0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -1.0, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    // -OH group attached to C1 (index 0)
+                    { type: "O", x: 1.5, y: 0.866, z: 0 }, // Oxygen
+                    { type: "H", x: 2.0, y: 1.2, z: 0 },  // Hydrogen of OH
+                    // Hydrogens for ring
+                    { type: "H", x: 0.9, y: 1.5, z: 0 }, // H for C2 (index 1)
+                    { type: "H", x: -0.9, y: 1.5, z: 0 }, // H for C3 (index 2)
+                    { type: "H", x: -1.8, y: 0, z: 0 }, // H for C4 (index 3)
+                    { type: "H", x: -0.9, y: -1.5, z: 0 }, // H for C5 (index 4)
+                    { type: "H", x: 0.9, y: -1.5, z: 0 } // H for C6 (index 5)
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Ring
+                    [0,6], // C-O bond
+                    [6,7], // O-H bond
+                    [1,8],[2,9],[3,10],[4,11],[5,12] // Ring C-H
+                ]
+            },
+            {
+                name: "stirena", // C8H8 - Benzene with vinyl group (C=C)
+                explanation: "Stirena (C₈H₈) adalah senyawa organik aromatik yang terdiri dari cincin benzena dan gugus vinil (-CH=CH₂). Ini adalah prekursor penting untuk polistirena.",
+                atoms: [
+                    // Benzene ring
+                    { type: "C", x: 1.0, y: 0, z: 0 },
+                    { type: "C", x: 0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -1.0, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    // Vinyl group attached to C1 (index 0)
+                    { type: "C", x: 1.5, y: 0, z: 0 }, // CH=CH2
+                    { type: "C", x: 2.5, y: 0, z: 0 }, // CH=CH2
+                    // Hydrogens
+                    { type: "H", x: 0.9, y: 1.5, z: 0 }, // H for C2 (index 1)
+                    { type: "H", x: -0.9, y: 1.5, z: 0 }, // H for C3 (index 2)
+                    { type: "H", x: -1.8, y: 0, z: 0 }, // H for C4 (index 3)
+                    { type: "H", x: -0.9, y: -1.5, z: 0 }, // H for C5 (index 4)
+                    { type: "H", x: 0.9, y: -1.5, z: 0 }, // H for C6 (index 5)
+                    // H for Vinyl group
+                    { type: "H", x: 1.2, y: 0.8, z: 0 }, // H on C7
+                    { type: "H", x: 2.8, y: 0.8, z: 0 }, { type: "H", x: 2.8, y: -0.8, z: 0 } // H on C8
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Ring
+                    [0,6], // C-C single bond to vinyl
+                    [6,7], // C=C double bond (represented as single)
+                    [1,8],[2,9],[3,10],[4,11],[5,12], // Ring C-H
+                    [6,13], // C-H on vinyl
+                    [7,14],[7,15] // C-H on vinyl
+                ]
+            },
+            {
+                name: "anisole", // C7H8O - Benzene with -OCH3 group
+                explanation: "Anisole (C₇H₈O) adalah senyawa organik dengan gugus metoksi (-OCH₃) yang terikat pada cincin benzena. Digunakan dalam parfum dan sintesis organik.",
+                atoms: [
+                    // Benzene ring
+                    { type: "C", x: 1.0, y: 0, z: 0 },
+                    { type: "C", x: 0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -0.5, y: 0.866, z: 0 },
+                    { type: "C", x: -1.0, y: 0, z: 0 },
+                    { type: "C", x: -0.5, y: -0.866, z: 0 },
+                    { type: "C", x: 0.5, y: -0.866, z: 0 },
+                    // -OCH3 group attached to C1 (index 0)
+                    { type: "O", x: 1.5, y: 0.866, z: 0 }, // Oxygen
+                    { type: "C", x: 2.0, y: 1.7, z: 0 },  // Methyl Carbon
+                    // Hydrogens
+                    { type: "H", x: 0.9, y: 1.5, z: 0 }, // H for C2 (index 1)
+                    { type: "H", x: -0.9, y: 1.5, z: 0 }, // H for C3 (index 2)
+                    { type: "H", x: -1.8, y: 0, z: 0 }, // H for C4 (index 3)
+                    { type: "H", x: -0.9, y: -1.5, z: 0 }, // H for C5 (index 4)
+                    { type: "H", x: 0.9, y: -1.5, z: 0 }, // H for C6 (index 5)
+                    // H for Methyl
+                    { type: "H", x: 2.5, y: 2.2, z: 0 }, { type: "H", x: 1.5, y: 2.2, z: 0 }, { type: "H", x: 2.0, y: 1.7, z: 0.8 }
+                ],
+                bonds: [
+                    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0], // Ring
+                    [0,6], // C-O bond
+                    [6,7], // O-CH3 bond
+                    [1,8],[2,9],[3,10],[4,11],[5,12], // Ring C-H
+                    [7,13],[7,14],[7,15] // CH3-H
+                ]
+            }
+        ]
+    };
+
+    const characters = [
+        { name: "Ilmuwan" },
+        { name: "Robot" },
+        { name: "Alien" }
+    ];
+
+    // State game
+    let playerName = "";
+    let playerChar = null;
+    let currentLevel = 1; // Mengganti 'level' menjadi 'currentLevel' untuk menghindari kebingungan
+    const MAX_LEVEL = 5; // Batas level game
+    const QUESTIONS_PER_LEVEL = 5; // Jumlah soal per level
+
+    let questionsAnsweredInLevel = 0; // Soal yang sudah dijawab di level saat ini
+    let lives = 3;
+    let currentMolecule = null;
+    let selectedLetters = [];
+    let shuffledLetters = [];
+    let currentLevelMolecules = []; // Soal untuk level saat ini
+
+    // DOM elements
+    const startScreen = document.getElementById("startScreen");
+    const mainGame = document.getElementById("mainGame");
+    const endScreen = document.getElementById("endScreen");
+    const playerInfo = document.getElementById("playerInfo");
+    const levelSpan = document.getElementById("level");
+    const questionCountSpan = document.getElementById("questionCount"); // Elemen baru untuk jumlah soal
+    const livesSpan = document.getElementById("lives");
+    const wordContainer = document.getElementById("wordContainer");
+    const answerArea = document.getElementById("answerArea");
+    const message = document.getElementById("message");
+    const explanation = document.getElementById("explanation");
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const endTitle = document.getElementById("endTitle");
+    const endMessage = document.getElementById("endMessage");
+    const restartBtn = document.getElementById("restartBtn");
+    const benarSound = document.getElementById("benarSound");
+    const salahSound = document.getElementById("salahSound");
+    const levelUpSound = document.getElementById("levelUpSound"); // Tambahkan suara level up
+    const game3DElement = document.getElementById("game3D");
+    const levelUpOverlay = document.getElementById("levelUpOverlay"); // Tambahkan overlay level up
+
+    // Three.js variables
+    let scene, camera, renderer;
+    let moleculeGroup;
+
+    // Fungsi membuat bola atom dengan warna sesuai tipe
+    function createAtomSphere(type) {
+        let color;
+        switch(type) {
+            case "C": color = 0x333333; break;
+            case "H": color = 0xeeeeee; break;
+            case "O": color = 0xff0000; break; // Oxygen red
+            case "N": color = 0x0000ff; break; // Nitrogen blue
+            default: color = 0xff00ff;
+        }
+        const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const material = new THREE.MeshPhongMaterial({ color: color });
+        return new THREE.Mesh(geometry, material);
+    }
+
+    // Fungsi membuat batang ikatan antar atom
+    function createBondCylinder(start, end) {
+        const dir = new THREE.Vector3().subVectors(end, start);
+        const length = dir.length();
+        const geometry = new THREE.CylinderGeometry(0.1, 0.1, length, 16);
+        const material = new THREE.MeshPhongMaterial({ color: 0x999999 });
+        const cylinder = new THREE.Mesh(geometry, material);
+
+        const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+        cylinder.position.copy(midpoint);
+
+        cylinder.lookAt(end);
+        cylinder.rotateX(Math.PI / 2);
+
+        return cylinder;
+    }
+
+    // Fungsi buat scene dan render Three.js
+    function initThree() {
+        if(renderer) {
+            renderer.dispose();
+            if (renderer.domElement.parentNode) {
+                renderer.domElement.parentNode.removeChild(renderer.domElement);
+            }
+        }
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a2530);
+
+        const width = game3DElement.offsetWidth;
+        const height = game3DElement.offsetHeight;
+
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        camera.position.set(0, 0, 5);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(width, height);
+        game3DElement.innerHTML = "";
+        game3DElement.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        directionalLight.position.set(3, 5, 4);
+        scene.add(directionalLight);
+
+        moleculeGroup = new THREE.Group();
+        scene.add(moleculeGroup);
+
+        window.addEventListener("resize", onWindowResize, false);
+    }
+
+    // Resize handler
+    function onWindowResize() {
+        if(!renderer) return;
+        const width = game3DElement.offsetWidth;
+        const height = game3DElement.offsetHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    // Render loop animasi molekul berputar
+    function animate() {
+        requestAnimationFrame(animate);
+        if(moleculeGroup) {
+            moleculeGroup.rotation.y += 0.01;
+            moleculeGroup.rotation.x += 0.005;
+        }
+        renderer.render(scene, camera);
+    }
+
+    // Load molekul ke scene 3D
+    function loadMolecule(molecule) {
+        while(moleculeGroup.children.length) {
+            const obj = moleculeGroup.children[0];
+            moleculeGroup.remove(obj);
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) obj.material.dispose();
+        }
+
+        const atomMeshes = [];
+        molecule.atoms.forEach(atom => {
+            const sphere = createAtomSphere(atom.type);
+            sphere.position.set(atom.x, atom.y, atom.z);
+            moleculeGroup.add(sphere);
+            atomMeshes.push(sphere);
+        });
+
+        molecule.bonds.forEach(pair => {
+            const startAtom = molecule.atoms[pair[0]];
+            const endAtom = molecule.atoms[pair[1]];
+            const start = new THREE.Vector3(startAtom.x, startAtom.y, startAtom.z);
+            const end = new THREE.Vector3(endAtom.x, endAtom.y, endAtom.z);
+            const bond = createBondCylinder(start, end);
+            moleculeGroup.add(bond);
+        });
+    }
+
+    // Shuffle array helper
+    function shuffleArray(arr) {
+        const copy = arr.slice();
+        for(let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    }
+
+    // Fungsi untuk mendapatkan soal untuk level saat ini
+    function getMoleculesForCurrentLevel() {
+        let moleculesPool;
+        switch (currentLevel) {
+            case 1: moleculesPool = moleculesByDifficulty.easy; break;
+            case 2: moleculesPool = moleculesByDifficulty.medium; break;
+            case 3: moleculesPool = moleculesByDifficulty.hard; break;
+            case 4: moleculesPool = moleculesByDifficulty.very_hard; break;
+            case 5: moleculesPool = moleculesByDifficulty.expert; break;
+            default: moleculesPool = moleculesByDifficulty.easy; // Fallback
+        }
+        // Pastikan kita memiliki cukup soal di pool
+        if (moleculesPool.length < QUESTIONS_PER_LEVEL) {
+            console.warn(`Not enough molecules for Level ${currentLevel}. Using all available molecules and repeating if necessary.`);
+            const shuffledPool = shuffleArray(moleculesPool);
+            // Repeat molecules if pool is smaller than QUESTIONS_PER_LEVEL
+            const result = [];
+            for (let i = 0; i < QUESTIONS_PER_LEVEL; i++) {
+                result.push(shuffledPool[i % shuffledPool.length]);
+            }
+            return result;
+        } else {
+            return shuffleArray(moleculesPool).slice(0, QUESTIONS_PER_LEVEL);
+        }
+    }
+
+    // Mulai soal baru di level saat ini
+    function startNewQuestion() {
+        message.textContent = "";
+        explanation.textContent = "";
+        answerArea.textContent = "";
+        selectedLetters = [];
+
+        currentMolecule = currentLevelMolecules[questionsAnsweredInLevel];
+        if (!currentMolecule) {
+            // Ini seharusnya tidak terjadi jika logika di atas benar
+            console.error("No molecule found for current question in level.");
+            showEndScreen(false); // Game Over karena kesalahan data
+            return;
+        }
+        loadMolecule(currentMolecule);
+
+        const letters = currentMolecule.name.split("");
+        shuffledLetters = shuffleArray(letters);
+        renderLetters();
+
+        levelSpan.textContent = currentLevel;
+        questionCountSpan.textContent = questionsAnsweredInLevel + 1; // Tampilkan soal ke-berapa
+        livesSpan.textContent = lives;
+    }
+
+    // Memulai seluruh level
+    function startLevel() {
+        questionsAnsweredInLevel = 0;
+        currentLevelMolecules = getMoleculesForCurrentLevel(); // Ambil 5 soal acak untuk level ini
+        startNewQuestion();
+    }
+
+    // Render kotak huruf acak
+    function renderLetters() {
+        wordContainer.innerHTML = "";
+        shuffledLetters.forEach((ltr, idx) => {
+            const box = document.createElement("div");
+            box.classList.add("letter-box");
+            box.textContent = ltr.toUpperCase();
+            box.dataset.idx = idx;
+            box.addEventListener("click", () => {
+                if(box.classList.contains("selected")) return;
+                box.classList.add("selected");
+                selectedLetters.push(ltr);
+                updateAnswerArea();
+            });
+            wordContainer.appendChild(box);
+        });
+    }
+
+    // Update area jawaban dengan huruf yang dipilih
+    function updateAnswerArea() {
+        answerArea.textContent = selectedLetters.join("").toUpperCase();
+    }
+
+    // Reset pilihan huruf
+    function resetAnswer() {
+        selectedLetters = [];
+        updateAnswerArea();
+        document.querySelectorAll(".letter-box").forEach(box => box.classList.remove("selected"));
+        message.textContent = "";
+    }
+
+    // Submit jawaban
+    function submitAnswer() {
+        const answer = selectedLetters.join("").toLowerCase();
+        if(!answer) {
+            message.textContent = "Silakan pilih huruf dulu!";
+            return;
+        }
+        if(answer === currentMolecule.name) {
+            benarSound.play();
+            message.style.color = "#00ff99";
+            message.textContent = "Jawaban benar! 🎉";
+            explanation.textContent = currentMolecule.explanation;
+
+            questionsAnsweredInLevel++; // Soal di level ini bertambah
+
+            if (questionsAnsweredInLevel < QUESTIONS_PER_LEVEL) {
+                // Lanjut ke soal berikutnya di level yang sama
+                setTimeout(() => startNewQuestion(), 2000);
+            } else {
+                // Semua soal di level ini sudah terjawab
+                currentLevel++; // Naik level
+                if (currentLevel > MAX_LEVEL) {
+                    // Game Selesai (Menang)
+                    setTimeout(() => showEndScreen(true), 2000);
+                } else {
+                    // Lanjut ke level berikutnya
+                    // Tampilkan overlay level up
+                    levelUpOverlay.textContent = `LEVEL ${currentLevel - 1} SELESAI! NEXT: LEVEL ${currentLevel}`;
+                    levelUpOverlay.style.display = "flex"; // Tampilkan overlay
+                    levelUpSound.play(); // Mainkan suara level up
+
+                    setTimeout(() => {
+                        levelUpOverlay.style.display = "none"; // Sembunyikan overlay
+                        startLevel(); // Mulai level baru setelah delay
+                    }, 3000); // Overlay akan tampil selama 3 detik
+                }
+            }
+        } else {
+            salahSound.play();
+            lives--;
+            livesSpan.textContent = lives;
+            message.style.color = "#ff4444";
+            message.textContent = `Jawaban salah! Nyawa tersisa: ${lives}`;
+            explanation.textContent = "";
+
+            if(lives <= 0) {
+                setTimeout(() => showEndScreen(false), 1500);
+            }
+        }
+        resetAnswer(); // Reset pilihan huruf setelah submit
+    }
+
+    // Tampilkan halaman akhir
+    function showEndScreen(won) {
+        mainGame.style.display = "none";
+        endScreen.style.display = "block";
+        if(won) {
+            endTitle.textContent = "Selamat! Kamu Menang! 🎉";
+            endMessage.textContent = `Kamu berhasil menyelesaikan semua level (${MAX_LEVEL} level), ${playerName}. Terima kasih telah bermain!`;
+        } else {
+            endTitle.textContent = "Game Over";
+            endMessage.textContent = `Maaf, nyawamu habis pada Level ${currentLevel}, ${playerName}. Coba lagi ya!`;
+        }
+    }
+
+    // Reset game
+    function resetGame() {
+        currentLevel = 1;
+        questionsAnsweredInLevel = 0;
+        lives = 3;
+        endScreen.style.display = "none";
+        startScreen.style.display = "block";
+        message.style.color = "white";
+        explanation.textContent = "";
+        currentLevelMolecules = [];
+        document.getElementById("playerName").value = "";
+        document.querySelectorAll(".char-option").forEach(ch => ch.classList.remove("selected"));
+    }
+
+    // Event Listener start game button
+    document.getElementById("startBtn").addEventListener("click", () => {
+        const nameInput = document.getElementById("playerName").value.trim();
+        if(nameInput === "") {
+            alert("Masukkan nama kamu dulu ya!");
+            return;
+        }
+        const selectedCharEl = document.querySelector(".char-option.selected");
+        if(!selectedCharEl) {
+            alert("Pilih karakter kamu dulu!");
+            return;
+        }
+        playerName = nameInput;
+        playerChar = characters.find(c => c.name === selectedCharEl.dataset.char);
+        startScreen.style.display = "none";
+        mainGame.style.display = "block";
+        playerInfo.textContent = `${playerName} (${playerChar.name})`;
+
+        initThree();
+        animate();
+        startLevel(); // Mulai game dengan level 1
+    });
+
+    // Event Listener karakter pilih
+    document.querySelectorAll(".char-option").forEach(el => {
+        el.addEventListener("click", () => {
+            document.querySelectorAll(".char-option").forEach(ch => ch.classList.remove("selected"));
+            el.classList.add("selected");
+        });
+    });
+
+    // Event Listener submit jawaban
+    submitBtn.addEventListener("click", () => {
+        submitAnswer();
+    });
+
+    // Event Listener reset jawaban
+    resetBtn.addEventListener("click", () => {
+        resetAnswer();
+    });
+
+    // Event Listener restart game
+    restartBtn.addEventListener("click", () => {
+        resetGame();
+    });
+
+    // Keyboard support (optional)
+    window.addEventListener("keydown", e => {
+        if(mainGame.style.display === "block") {
+            if(e.key === "Enter") {
+                submitAnswer();
+            } else if(e.key === "Backspace") {
+                resetAnswer();
+            }
+        }
+    });
+
+})();
+</script>
+</body>
+</html>
